@@ -1,0 +1,6 @@
+{
+  "name": "PSP Emulator Pro",
+  "description": "Un émulateur PSP professionnel haute performance avec interface Material Design 3, gestionnaire de jeux, sauvegardes d'états et contrôles entièrement personnalisables.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
