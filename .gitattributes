@@ -1,0 +1,27 @@
+# Auto detect text files and perform LF normalization
+* text=auto
+
+# Explicitly declare text files
+*.kt text
+*.java text
+*.xml text
+*.gradle text
+*.gradle.kts text
+*.properties text
+*.toml text
+*.yml text
+*.yaml text
+*.md text
+*.json text
+
+# Explicitly declare binary files
+*.jar binary
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.webp binary
+*.gif binary
+*.so binary
+*.aar binary
+*.apk binary
+*.keystore binary
