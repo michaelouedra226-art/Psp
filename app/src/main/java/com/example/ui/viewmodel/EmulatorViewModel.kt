@@ -2,6 +2,8 @@ package com.example.ui.viewmodel
 
 import android.app.Application
 import android.content.Context
+import android.net.Uri
+import android.provider.OpenableColumns
 import android.util.Log
 import androidx.compose.ui.geometry.Offset
 import androidx.lifecycle.AndroidViewModel
@@ -24,7 +26,7 @@ enum class Screen {
 }
 
 enum class LibraryTab {
-    All, Favorites, Recents, Stats
+    All, Favorites, Recents, Stats, Features
 }
 
 enum class SortType {
@@ -633,6 +635,74 @@ class EmulatorViewModel(application: Application) : AndroidViewModel(application
     fun loadCustomFolder(path: String) {
         viewModelScope.launch(Dispatchers.IO) {
             repository.scanDirectory(path)
+        }
+    }
+
+    fun importGameFromUri(context: Context, uri: Uri) {
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                val contentResolver = context.contentResolver
+                var fileName = "imported_game_${System.currentTimeMillis()}.iso"
+                
+                // Get display name
+                val cursor = contentResolver.query(uri, null, null, null, null)
+                cursor?.use {
+                    if (it.moveToFirst()) {
+                        val nameIndex = it.getColumnIndex(OpenableColumns.DISPLAY_NAME)
+                        if (nameIndex != -1) {
+                            fileName = it.getString(nameIndex)
+                        }
+                    }
+                }
+                
+                val destDir = File(context.filesDir, "games")
+                if (!destDir.exists()) {
+                    destDir.mkdirs()
+                }
+                val destFile = File(destDir, fileName)
+                
+                contentResolver.openInputStream(uri)?.use { inputStream ->
+                    destFile.outputStream().use { outputStream ->
+                        inputStream.copyTo(outputStream)
+                    }
+                }
+                
+                val extension = destFile.extension.uppercase()
+                val title = destFile.nameWithoutExtension.replace("_", " ").replace("-", " ")
+                val size = destFile.length()
+                val region = when {
+                    title.contains("US") || title.contains("USA") -> "US"
+                    title.contains("JP") || title.contains("JAP") || title.contains("JPN") -> "JP"
+                    else -> "EU"
+                }
+                
+                val newGame = Game(
+                    title = title,
+                    filePath = destFile.absolutePath,
+                    fileSize = size,
+                    format = extension,
+                    region = region,
+                    rating = (45..50).random().toFloat() / 10f,
+                    genre = when {
+                        title.contains("RACE", true) || title.contains("SPEED", true) || title.contains("WIPEOUT", true) -> "Racing"
+                        title.contains("WAR", true) || title.contains("FIGHT", true) || title.contains("TEKKEN", true) -> "Fighting"
+                        title.contains("SHOOT", true) || title.contains("SOLDIER", true) -> "Shooter"
+                        else -> "Action"
+                    },
+                    coverUrl = "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=300&auto=format&fit=crop&q=80"
+                )
+                
+                repository.insertGame(newGame)
+                
+                notificationHelper.sendNotification(
+                    com.example.core.NotificationHelper.CHANNEL_SCANS,
+                    2002,
+                    "Importation Réussie",
+                    "Le jeu '$title' a été importé avec succès dans votre bibliothèque !"
+                )
+            } catch (e: Exception) {
+                Log.e("EmulatorViewModel", "Failed to import game: ${e.message}")
+            }
         }
     }
 }
