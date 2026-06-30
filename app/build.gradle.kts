@@ -1,4 +1,5 @@
 import com.google.gms.googleservices.GoogleServicesPlugin.MissingGoogleServicesStrategy
+import java.util.Base64
 
 plugins {
   alias(libs.plugins.android.application)
@@ -21,6 +22,41 @@ android {
     versionName = "1.0"
 
     testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+  }
+
+  // Ensure debug.keystore is present
+  val debugKeystore = file("${rootDir}/debug.keystore")
+  if (!debugKeystore.exists()) {
+    val base64File = file("${rootDir}/debug.keystore.base64")
+    if (base64File.exists()) {
+      try {
+        val base64Content = base64File.readText().trim().replace("\\s".toRegex(), "")
+        val decoded = Base64.getDecoder().decode(base64Content)
+        debugKeystore.writeBytes(decoded)
+        logger.lifecycle("Restored debug.keystore from debug.keystore.base64")
+      } catch (e: Exception) {
+        logger.error("Failed to decode debug.keystore.base64: ${e.message}")
+      }
+    }
+    if (!debugKeystore.exists()) {
+      logger.lifecycle("Generating a fresh debug.keystore...")
+      try {
+        val process = ProcessBuilder(
+          "keytool", "-genkey", "-v",
+          "-keystore", debugKeystore.absolutePath,
+          "-storepass", "android",
+          "-alias", "androiddebugkey",
+          "-keypass", "android",
+          "-keyalg", "RSA",
+          "-keysize", "2048",
+          "-validity", "10000",
+          "-dname", "CN=Android Debug, O=Android, C=US"
+        ).start()
+        process.waitFor()
+      } catch (e: Exception) {
+        logger.error("Failed to generate debug.keystore using keytool: ${e.message}")
+      }
+    }
   }
 
   signingConfigs {
