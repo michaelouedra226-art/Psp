@@ -25,6 +25,7 @@ jobs:
         uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: '9.3.1'
+          add-checksums: a5e75118d96b4eac2100876f6af6a5ca5029cd440f87736425350fb4cf308b42
 
       - name: Run Unit Tests
         run: gradle testDebugUnitTest --continue
