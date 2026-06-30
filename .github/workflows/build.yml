@@ -28,6 +28,15 @@ jobs:
           wrapper-validation-enabled: false
           validate-wrappers: false
 
+      - name: Restore Debug Keystore and Env
+        run: |
+          if [ -f debug.keystore.base64 ]; then
+            base64 -d debug.keystore.base64 > debug.keystore
+          fi
+          if [ ! -f .env ] && [ -f .env.example ]; then
+            cp .env.example .env
+          fi
+
       - name: Run Unit Tests
         run: gradle testDebugUnitTest --continue
 
