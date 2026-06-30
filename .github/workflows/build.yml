@@ -26,6 +26,7 @@ jobs:
         with:
           gradle-version: '9.3.1'
           wrapper-validation-enabled: false
+          validate-wrappers: false
 
       - name: Run Unit Tests
         run: gradle testDebugUnitTest --continue
